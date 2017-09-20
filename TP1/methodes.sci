@@ -7,8 +7,13 @@
 /// \return vecteur definissant le terme de contrainte.
 // -----------------------------------------------------------------------
 function v = ZhangConstraintTerm(H, i, j)
-  // A modifier!
-  v = rand(1, 6);
+  t1 = H(i,1) * H(j,1);
+  t2 = H(i,1) * H(j,2) + H(i,2) + H(j,1);
+  t3 = H(i,2) * H(j,2);
+  t4 = H(i,3) * H(j,1) + H(i,1) * H(j,3);
+  t5 = H(i,3) * H(j,2) + H(i,2) * H(j,3);
+  t6 = H(i,3) * H(j,3);
+  v = [t1,t2,t3,t4,t5,t6];
 endfunction
 
 // -----------------------------------------------------------------------
@@ -29,8 +34,13 @@ endfunction
 /// \return matrice 3*3 des parametres intrinseques.
 // -----------------------------------------------------------------------
 function A = IntrinsicMatrix(b)
-  // A modifier!
-  A = rand(3, 3);
+  v0 = (b(2) * b(4) - b(1) + b(3)) / (b(1) * b(3) - b(2)^2);
+  lambda = b(6) - (b(4)^2 + v0 * (b(2) * b(4) - b(1) * b(5))) / b(1);
+  alpha = sqrt(lambda / b(1));
+  beta = sqrt(lambda * b(1) / (b(1) * b(3) - b(2)^2));
+  gamma = -b(2) * alpha^2 * beta / lambda;
+  u0 = gamma * v0 / beta - b(4) * alpha^2 / lambda;
+  A = [alpha,gamma,u0;0,beta,v0;0,0,1];
 endfunction
 
 // -----------------------------------------------------------------------
