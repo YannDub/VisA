@@ -54,7 +54,7 @@ function E = ExtrinsicMatrix(iA, H)
   lambda = 1 / norm(iA * H(:,1));
   r1 = lambda * iA * H(:,1);
   r2 = lambda * iA * H(:,2);
-  r3 = cross(r1,r2);
+  r3 = CrossProduct(r1,r2);
   t = lambda * iA * H(:,3);
   E = [r1, r2, r3, t];
 endfunction
