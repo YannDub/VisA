@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Inclure les fichiers d'entete
 -------------------------------------------------------------------------- */
 #include <stdio.h>
-#include <iostream>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -39,11 +38,15 @@ Mat iviDetectCorners(const Mat& mImage,
                      int iMaxCorners) {
     // A modifier !
     double tx = mImage.cols, ty = mImage.rows;
-    Mat mCorners = (Mat_<double>(3,2) <<
-        .5 * tx, 0.5 * tx,
-        .5 * ty, 0.0 * ty,
-        1., 1.
-        );
+    vector<Point2f> corners;
+    Mat mCorners = Mat::zeros(3, iMaxCorners, CV_64F);
+
+    goodFeaturesToTrack(mImage, corners, iMaxCorners, 0.01, 10, Mat(), 3, false, 0.04);
+    for(int i = 0; i < iMaxCorners; i++) {
+        mCorners.at<double>(0, i) = corners[i].x;
+        mCorners.at<double>(1, i) = corners[i].y;
+        mCorners.at<double>(2, i) = 1;
+    }
     // Retour de la matrice
     return mCorners;
 }
@@ -107,8 +110,21 @@ Mat iviFundamentalMatrix(const Mat& mLeftIntrinsic,
 Mat iviDistancesMatrix(const Mat& m2DLeftCorners,
                        const Mat& m2DRightCorners,
                        const Mat& mFundamental) {
-    // A modifier !
-    Mat mDistances = Mat();
+    Mat d2 = mFundamental * m2DLeftCorners;
+    Mat d1 = mFundamental.t() * m2DRightCorners;
+
+    for(int i = 0; i < m2DLeftCorners.size(); i++) {
+        d2.at<double>(0,i) /= sqrt(d2.at<double>(0,i) * d2.at<double>(0,i) + d2.at<double>(1,i) * d2.at<double>(1,i));
+    }
+
+    for(int i = 0; i < m2DRightCorners.size(); i++) {
+        d1.at<double>(0,i) /= sqrt(d1.at<double>(0,i) * d1.at<double>(0,i) + d1.at<double>(1,i) * d1.at<double>(1,i));
+    }
+
+    Mat distanceP1 = m2DLeftCorners * d1;
+    Mat distanceP2 = d2 * m2DRightCorners;
+
+    Mat mDistances = distanceP1 + distanceP2;
     // Retour de la matrice fondamentale
     return mDistances;
 }
