@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Inclure les fichiers d'entete
 -------------------------------------------------------------------------- */
 #include <stdio.h>
+#include <iostream>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -38,10 +39,10 @@ Mat iviDetectCorners(const Mat& mImage,
                      int iMaxCorners) {
     // A modifier !
     double tx = mImage.cols, ty = mImage.rows;
-    Mat mCorners = (Mat_<double>(3,4) <<
-        .25 * tx, .75 * tx, .25 * tx, .75 * tx,
-        .25 * ty, .25 * ty, .75 * ty, .75 * ty,
-        1., 1., 1., 1.
+    Mat mCorners = (Mat_<double>(3,2) <<
+        .5 * tx, 0.5 * tx,
+        .5 * ty, 0.0 * ty,
+        1., 1.
         );
     // Retour de la matrice
     return mCorners;
@@ -54,8 +55,16 @@ Mat iviDetectCorners(const Mat& mImage,
 /// @return matrice de produit vectoriel
 // -----------------------------------------------------------------------
 Mat iviVectorProductMatrix(const Mat& v) {
-    // A modifier !
-    Mat mVectorProduct = Mat::eye(3, 3, CV_64F);
+    double x = v.at<double>(0);
+    double y = v.at<double>(1);
+    double z = v.at<double>(2);
+    Mat mVectorProduct = Mat::zeros(3, 3, CV_64F);
+    mVectorProduct.at<double>(1, 0) = z;
+    mVectorProduct.at<double>(2, 0) = -y;
+    mVectorProduct.at<double>(2, 1) = x;
+    mVectorProduct.at<double>(0, 1) = -z;
+    mVectorProduct.at<double>(0, 2) = y;
+    mVectorProduct.at<double>(1, 2) = -x;
     // Retour de la matrice
     return mVectorProduct;
 }
@@ -73,9 +82,15 @@ Mat iviFundamentalMatrix(const Mat& mLeftIntrinsic,
                          const Mat& mLeftExtrinsic,
                          const Mat& mRightIntrinsic,
                          const Mat& mRightExtrinsic) {
-    // A modifier !
-    // Doit utiliser la fonction iviVectorProductMatrix
-    Mat mFundamental = Mat::eye(3, 3, CV_64F);
+    Mat f = (Mat_<double>(3,4) << 1,0,0,0, 0,1,0,0, 0,0,1,0);
+    Mat o1 = mLeftExtrinsic.inv().col(3);
+    Mat p1 = mLeftIntrinsic * f * mLeftExtrinsic;
+    Mat p2 = mRightIntrinsic * f * mRightExtrinsic;
+
+    Mat mFundamental = iviVectorProductMatrix(p2 * o1) * p2 * p1.inv(DECOMP_SVD);
+
+    Mat d = mFundamental.t() * (Mat_<double>(3,1) << 320, 240, 1);
+
     // Retour de la matrice fondamentale
     return mFundamental;
 }
