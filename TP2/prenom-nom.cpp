@@ -122,7 +122,7 @@ Mat iviDistancesMatrix(const Mat& m2DLeftCorners,
     }
 
     Mat distanceP1 = m2DLeftCorners * d1;
-    Mat distanceP2 = d2 * m2DRightCorners;
+    Mat distanceP2 = m2DRightCorners * d2;
 
     Mat mDistances = distanceP1 + distanceP2;
     // Retour de la matrice fondamentale
