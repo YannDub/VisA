@@ -113,18 +113,22 @@ Mat iviDistancesMatrix(const Mat& m2DLeftCorners,
     Mat d2 = mFundamental * m2DLeftCorners;
     Mat d1 = mFundamental.t() * m2DRightCorners;
 
-    for(int i = 0; i < m2DLeftCorners.size(); i++) {
+    for(int i = 0; i < m2DLeftCorners.cols; i++) {
         d2.at<double>(0,i) /= sqrt(d2.at<double>(0,i) * d2.at<double>(0,i) + d2.at<double>(1,i) * d2.at<double>(1,i));
+        d2.at<double>(1,i) /= sqrt(d2.at<double>(0,i) * d2.at<double>(0,i) + d2.at<double>(1,i) * d2.at<double>(1,i));
+        d2.at<double>(2,i) = 1;
     }
 
-    for(int i = 0; i < m2DRightCorners.size(); i++) {
+    for(int i = 0; i < m2DRightCorners.cols; i++) {
         d1.at<double>(0,i) /= sqrt(d1.at<double>(0,i) * d1.at<double>(0,i) + d1.at<double>(1,i) * d1.at<double>(1,i));
+        d1.at<double>(1,i) /= sqrt(d1.at<double>(0,i) * d1.at<double>(0,i) + d1.at<double>(1,i) * d1.at<double>(1,i));
+        d1.at<double>(2,i) = 1;
     }
 
-    Mat distanceP1 = m2DLeftCorners * d1;
-    Mat distanceP2 = m2DRightCorners * d2;
+    Mat distanceP1 = m2DLeftCorners.t() * d1;
+    Mat distanceP2 = m2DRightCorners.t() * d2;
 
-    Mat mDistances = distanceP1 + distanceP2;
+    Mat mDistances = distanceP1 + distanceP2.t();
     // Retour de la matrice fondamentale
     return mDistances;
 }
@@ -142,5 +146,32 @@ void iviMarkAssociations(const Mat& mDistances,
                          double dMaxDistance,
                          Mat& mRightHomologous,
                          Mat& mLeftHomologous) {
-    // A modifier !
+    int sum = 0;
+
+    mRightHomologous = Mat::zeros(1, mDistances.cols, CV_64F);
+    mLeftHomologous = Mat::zeros(1, mDistances.rows, CV_64F);
+
+    for(int i = 0; i < mDistances.rows; i++) {
+        double min = dMaxDistance;
+        double p = 0;
+        double pp = 0;
+
+        for(int j = 0; j < mDistances.cols; j++) {
+            double current = abs(mDistances.at<double>(i,j));
+            if(min > current && min <= dMaxDistance) {
+                min = current;
+                p = i;
+                pp = j;
+            }
+        }
+
+        mRightHomologous.at<double>(0,pp) = 1;
+        mLeftHomologous.at<double>(0,p) = 1;
+    }
+
+    for(int i = 0; i < mLeftHomologous.cols; i++) {
+        sum += mLeftHomologous.at<double>(0,i);
+    }
+
+    printf("%d ", sum);
 }
