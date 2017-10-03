@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     bool bDisplay = false; // Affichage de l'image traitee
     bool bVerbose = false; // Affichage de messages d'information
     bool bSave = false; // Sauvegarde des images resultat
-    double dMaxDistance = 3.0; // Distance maximale pour une association
+    double dMaxDistance = 1.0; // Distance maximale pour une association
 
     /* ------------------------------------------------------------------
     Autres variables

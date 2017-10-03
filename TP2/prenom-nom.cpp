@@ -147,6 +147,7 @@ void iviMarkAssociations(const Mat& mDistances,
                          Mat& mRightHomologous,
                          Mat& mLeftHomologous) {
     int sum = 0;
+    int sum1 = 0;
 
     mRightHomologous = Mat::zeros(1, mDistances.cols, CV_64F);
     mLeftHomologous = Mat::zeros(1, mDistances.rows, CV_64F);
@@ -173,5 +174,9 @@ void iviMarkAssociations(const Mat& mDistances,
         sum += mLeftHomologous.at<double>(0,i);
     }
 
-    printf("%d ", sum);
+    for(int i = 0; i < mRightHomologous.cols; i++) {
+        sum1 += mRightHomologous.at<double>(0,i);
+    }
+
+    printf("%d %d", sum, sum1);
 }
