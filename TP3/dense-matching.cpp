@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
     bool bVerbose = false; // Affichage de messages d'information
     bool bSave = false; // Enregistrement des images resultat
     int iMaxDisparity = 32; // Disparite maximale
-    int iWindowHalfSize = 2; // Demi-taille de la fenetre de correlation
+    int iWindowHalfSize = 5; // Demi-taille de la fenetre de correlation
 
     /* ------------------------------------------------------------------
     Autres variables
