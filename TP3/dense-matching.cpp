@@ -149,21 +149,24 @@ int main(int argc, char **argv) {
         namedWindow("Disparity", CV_WINDOW_AUTOSIZE);
         namedWindow("Validity mask", CV_WINDOW_AUTOSIZE);
         // Ajuster la dynamique des images de disparite
-        minMaxLoc(mLeftDisparity, &dMin, &dMax);
+        //minMaxLoc(mLeftDisparity, &dMin, &dMax);
         if (bVerbose) {
             printf("Disparite maximale (ref gauche) = %lf\n", dMax);
         }
-        normalize(mLeftDisparity, mLeftDisparity, dMin, dMax, CV_MINMAX);
+        //normalize(mLeftDisparity, mLeftDisparity, 0, , CV_MINMAX);
+        mLeftDisparity *= 255 / iMaxDisparity;
         minMaxLoc(mRightDisparity, &dMin, &dMax);
         if (bVerbose) {
             printf("Disparite maximale (ref droite) = %lf\n", dMax);
         }
-        normalize(mRightDisparity, mRightDisparity, dMin, dMax, CV_MINMAX);
-        minMaxLoc(mDisparity, &dMin, &dMax);
+        //normalize(mRightDisparity, mRightDisparity, dMin, dMax, CV_MINMAX);
+        mRightDisparity *= 255 / iMaxDisparity;
+        //minMaxLoc(mDisparity, &dMin, &dMax);
         if (bVerbose) {
             printf("Disparite maximale = %lf\n", dMax);
         }
-        normalize(mDisparity, mDisparity, dMin, dMax, CV_MINMAX);
+        //normalize(mDisparity, mDisparity, dMin, dMax, CV_MINMAX);
+        mDisparity *= 255 / iMaxDisparity;
         // Et afficher
         imshow("Left", mLeftGray);
         imshow("Right", mRightGray);

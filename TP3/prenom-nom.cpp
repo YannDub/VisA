@@ -114,8 +114,21 @@ Mat iviComputeLeftSSDCost(const Mat& mLeftGray,
                           const Mat& mRightGray,
                           int iShift,
                           int iWindowHalfSize) {
-Mat mLeftSSDCost(mLeftGray.size(), CV_64F);
-    // A completer!
+    Mat mLeftSSDCost = Mat::zeros(mLeftGray.size(), CV_64F);
+    for(int y = iWindowHalfSize; y < mLeftGray.rows - iWindowHalfSize; y++) {
+        for(int x = iWindowHalfSize; x < mLeftGray.cols - iWindowHalfSize; x++) {
+            double sum = 0;
+            for(int i = -iWindowHalfSize; i <= iWindowHalfSize; i++) {
+                for(int j = -iWindowHalfSize; j <= iWindowHalfSize; j++) {
+                    double pl = mLeftGray.at<unsigned char>(y + j + 1, x + i);
+                    double pr = mRightGray.at<unsigned char>(y + j + 1, x + i - iShift);
+                    sum += (pl - pr) * (pl - pr);
+                }
+            }
+            mLeftSSDCost.at<double>(y, x) = sum;
+        }
+    }
+
     return mLeftSSDCost;
 }
 
@@ -134,8 +147,58 @@ Mat iviRightDisparityMap(const Mat& mLeftGray,
                          const Mat& mRightGray,
                          int iMaxDisparity,
                          int iWindowHalfSize) {
-Mat mRightDisparityMap(mLeftGray.size(), CV_8U);
-    // A completer!
+    Mat mRightDisparityMap(mLeftGray.size(), CV_8U);
+    Mat mSSD(mRightGray.size(), CV_64F);
+    Mat mMinSSD(mRightGray.size(), CV_64F);
+    double dMinSSD, *pdPtr1, *pdPtr2;
+    unsigned char *pucDisparity;
+    int iShift, iRow, iCol;
+    // Initialisation de l'image du minimum de SSD
+    dMinSSD = pow((double)(2 * iWindowHalfSize + 1), 2.0) * 512.0;
+    for (iRow = iWindowHalfSize;
+        iRow < mMinSSD.size().height - iWindowHalfSize;
+        iRow++) {
+        // Pointeur sur le debut de la ligne
+        pdPtr1 = mMinSSD.ptr<double>(iRow);
+        // Sauter la demi fenetre non utilisee
+        pdPtr1 += iWindowHalfSize;
+        // Remplir le reste de la ligne
+        for (iCol = iWindowHalfSize;
+            iCol < mMinSSD.size().width - iWindowHalfSize;
+            iCol++)
+                *pdPtr1++ = dMinSSD;
+    }
+    // Boucler pour tous les decalages possibles
+    for (iShift = 0; iShift < iMaxDisparity; iShift++) {
+        // Calculer le cout SSD pour ce decalage
+        mSSD = iviComputeRightSSDCost(mLeftGray, mRightGray,
+                                     iShift, iWindowHalfSize);
+        // Mettre a jour les valeurs minimales
+        for (iRow = iWindowHalfSize;
+            iRow < mMinSSD.size().height - iWindowHalfSize;
+            iRow++) {
+            // Pointeurs vers les debuts des lignes
+            pdPtr1 = mMinSSD.ptr<double>(iRow);
+            pdPtr2 = mSSD.ptr<double>(iRow);
+            pucDisparity = mRightDisparityMap.ptr<unsigned char>(iRow);
+            // Sauter la demi fenetre non utilisee
+            pdPtr1 += iWindowHalfSize;
+            pdPtr2 += iWindowHalfSize;
+            pucDisparity += iWindowHalfSize;
+            // Comparer sur le reste de la ligne
+            for (iCol = iWindowHalfSize;
+                iCol < mMinSSD.size().width - iWindowHalfSize;
+                iCol++) {
+                // SSD plus faible que le minimum precedent
+                if (*pdPtr1 > *pdPtr2) {
+                    *pucDisparity = (unsigned char)iShift;
+                    *pdPtr1 = *pdPtr2;
+                }
+                // Pixels suivants
+                pdPtr1++; pdPtr2++; pucDisparity++;
+            }
+        }
+    }
     return mRightDisparityMap;
 }
 
@@ -154,8 +217,22 @@ Mat iviComputeRightSSDCost(const Mat& mLeftGray,
                            const Mat& mRightGray,
                            int iShift,
                            int iWindowHalfSize) {
-Mat mRightSSDCost(mLeftGray.size(), CV_64F);
-    // A completer!
+    Mat mRightSSDCost = Mat::zeros(mLeftGray.size(), CV_64F);
+
+    for(int y = iWindowHalfSize; y < mRightGray.rows - iWindowHalfSize; y++) {
+        for(int x = iWindowHalfSize; x < mRightGray.cols - iWindowHalfSize; x++) {
+            double sum = 0;
+            for(int i = -iWindowHalfSize; i <= iWindowHalfSize; i++) {
+                for(int j = -iWindowHalfSize; j <= iWindowHalfSize; j++) {
+                    double pl = mRightGray.at<unsigned char>(y + j + 1, x + i);
+                    double pr = mLeftGray.at<unsigned char>(y + j + 1, x + i + iShift);
+                    sum += (pl - pr) * (pl - pr);
+                }
+            }
+            mRightSSDCost.at<double>(y, x) = sum;
+        }
+    }
+
     return mRightSSDCost;
 }
 
@@ -171,7 +248,22 @@ Mat mRightSSDCost(mLeftGray.size(), CV_64F);
 Mat iviLeftRightConsistency(const Mat& mLeftDisparity,
                             const Mat& mRightDisparity,
                             Mat& mValidityMask) {
-Mat mDisparity(mLeftDisparity.size(), CV_8U);
-    // A completer!
+    Mat mDisparity(mRightDisparity.size(), CV_8U);
+
+    for(int i = 0; i < mRightDisparity.rows; i++) {
+        for(int j = 0; j < mLeftDisparity.cols; j++) {
+            double dl = mLeftDisparity.at<unsigned char>(i, j);
+            double dr = mRightDisparity.at<unsigned char>(i, j);
+
+            if(dl == dr) {
+                mValidityMask.at<unsigned char>(i, j) = 0;
+                mDisparity.at<unsigned char>(i,j) = dl;
+            } else {
+                mValidityMask.at<unsigned char>(i, j) = 255;
+                mDisparity.at<unsigned char>(i,j) = 255;
+            }
+        }
+    }
+
     return mDisparity;
 }
