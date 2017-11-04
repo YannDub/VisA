@@ -54,7 +54,7 @@ for (j=0; j<H; j++) {
    }
 
 setBatchMode(false);
-
+/*
 selectImage(image_luminance_aug);
 run("8-bit");
 getRawStatistics(n, mean, min, max, std, histo);
@@ -64,7 +64,7 @@ run("8-bit");
 getRawStatistics(nl, meanl, minl, maxl, stdl, histol);
 
 print(mean - meanl);
-
+*/
 Dialog.create("Fin");
 Dialog.addMessage(" Cliquer sur OK pour terminer le traitement");
 Dialog.show();
