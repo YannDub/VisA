@@ -154,7 +154,7 @@ public class FCM_Visa_Template implements PlugIn {
 			for(k = 0; k < kmax; k++) {
 				double sum = 0;
 				for(i = 0; i < kmax; i++) {
-					double e = 1;
+					double e = 0;
 					if(m >= 2) e = (2 / (m - 1));
 					sum += Math.pow((Dprev[k][l] / Dprev[i][l]), e);
 				}
@@ -210,7 +210,7 @@ public class FCM_Visa_Template implements PlugIn {
 				for(k = 0; k < kmax; k++) {
 					double sum = 0;
 					for(i = 0; i < kmax; i++) {
-						double e = 1;
+						double e = 0;
 						if(m >= 2) e = (2 / (m - 1));
 						sum += Math.pow((Dmat[k][l] / Dmat[i][l]), e);
 					}
