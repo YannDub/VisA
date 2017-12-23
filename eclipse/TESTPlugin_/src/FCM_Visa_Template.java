@@ -140,6 +140,9 @@ public class FCM_Visa_Template implements PlugIn {
 		case "PCM":
 			this.PCM(c, red, green, blue, figJ, nbclasses, nbpixels, m, valeur_seuil, itermax, width, height, ipseg, impseg);
 			break;
+		case "Dave":
+			this.Dave(c, red, green, blue, figJ, nbclasses, nbpixels, m, valeur_seuil, itermax, width, height, ipseg, impseg);
+			break;
 		default:
 			this.FCM(c, red, green, blue, figJ, nbclasses, nbpixels, m, valeur_seuil, itermax, width, height, ipseg,
 					impseg);
@@ -506,6 +509,136 @@ public class FCM_Visa_Template implements PlugIn {
 				u[i][j] = 1.0 / (1.0 + Math.pow(d[i][j] / mu[i], 1.0 / (m - 1.0)));
 			}
 		}
+	}
+	
+	private void Dave(double[][] c, double[] red, double[] green, double[] blue, double[] figJ, int nbclasses,
+			int nbpixels, double m, double valeur_seuil, int itermax, int width, int height, ImageProcessor ipseg,
+			ImagePlus impseg) {
+		double Dmat[][] = new double[nbclasses][nbpixels];
+		double Dprev[][] = new double[nbclasses][nbpixels];
+		double Umat[][] = new double[nbclasses][nbpixels];
+		double Uprev[][] = new double[nbclasses][nbpixels];
+		int iter;
+		double seuil, stab;
+		int kmax = nbclasses;
+		int cpt = 0;
+
+		// Calcul de distance entre data et centroides
+		this.distance2(red, green, blue, c, Dprev, nbpixels, kmax);
+
+		// Initialisation des degr�s d'appartenance
+		// A COMPLETER
+		this.uFCM(Uprev, Dprev, nbpixels, kmax, m);
+
+		////////////////////////////////////////////////////////////
+		// FIN INITIALISATION FCM
+		///////////////////////////////////////////////////////////
+
+		/////////////////////////////////////////////////////////////
+		// BOUCLE PRINCIPALE
+		////////////////////////////////////////////////////////////
+		iter = 0;
+		stab = 2;
+		seuil = valeur_seuil;
+
+		/////////////////// A COMPLETER ///////////////////////////////
+		while ((iter < itermax) && (stab > seuil)) {
+			// Update the matrix of centroids
+			for (int i = 0; i < nbclasses; i++) {
+				double sum[] = { 0, 0, 0 };
+				double sum2 = 0;
+				for (int j = 0; j < nbpixels; j++) {
+					sum[0] += Math.pow(Uprev[i][j], m) * red[j];
+					sum[1] += Math.pow(Uprev[i][j], m) * green[j];
+					sum[2] += Math.pow(Uprev[i][j], m) * blue[j];
+				}
+				for (int j = 0; j < nbpixels; j++) {
+					sum2 += Math.pow(Uprev[i][j], m);
+				}
+				c[i][0] = sum[0] / sum2;
+				c[i][1] = sum[1] / sum2;
+				c[i][2] = sum[2] / sum2;
+
+			}
+			// Compute Dmat, the matrix of distances (euclidian) with the
+			// centro�ds
+			this.distance2(red, green, blue, c, Dmat, nbpixels, kmax);
+
+			this.uFCM(Umat, Dmat, nbpixels, kmax, m);
+			
+			for(int j = 0; j < nbpixels; j++) {
+				
+				for(int i = 0; i < nbclasses; i++) {
+					
+				}
+			}
+			double delta = this.delta(Uprev, Dprev, nbpixels, nbclasses, 0.5);
+			double sum = 0;
+			
+			for(int j = 0; j < nbpixels; j++) {
+				sum += delta;
+				double sum2 = 1;
+				for(int i = 0; i < nbclasses; i++) {
+					sum2 -= Uprev[i][j];
+				}
+				sum *= Math.pow(sum2, m);
+			}
+			
+			// Calculate difference between the previous partition and the new
+			// partition (performance index)
+			for (int l = 0; l < nbpixels; l++) {
+				for (int k = 0; k < nbclasses; k++) {
+					figJ[iter] += Math.pow(Uprev[k][l], m) * Dprev[k][l] + sum;
+				}
+			}
+			stab = iter == 0 ? figJ[iter] : Math.abs(figJ[iter] - figJ[iter - 1]);
+			iter++;
+
+			Uprev = Umat.clone();
+			Dprev = Dmat.clone();
+			////////////////////////////////////////////////////////
+
+			// Affichage de l'image segment�e
+			double[] mat_array = new double[nbclasses];
+			cpt = 0;
+			for (int i = 0; i < width; i++) {
+				for (int j = 0; j < height; j++) {
+					for (int k = 0; k < nbclasses; k++) {
+						mat_array[k] = Umat[k][cpt];
+					}
+					int indice = IndiceMaxOfArray(mat_array, nbclasses);
+					int array[] = new int[3];
+					array[0] = (int) c[indice][0];
+					array[1] = (int) c[indice][1];
+					array[2] = (int) c[indice][2];
+					ipseg.putPixel(i, j, array);
+					cpt++;
+				}
+			}
+			impseg.updateAndDraw();
+			//////////////////////////////////
+		} // Fin boucle
+
+		double[] xplot = new double[itermax];
+		double[] yplot = new double[itermax];
+		for (int w = 0; w < itermax; w++) {
+			xplot[w] = (double) w;
+			yplot[w] = (double) figJ[w];
+		}
+		Plot plot = new Plot("Performance Index (FCM)", "iterations", "J(P) value", xplot, yplot);
+		plot.setLineWidth(2);
+		plot.setColor(Color.blue);
+		plot.show();
+	}
+	
+	private double delta(double[][] u, double[][] d, double nbpixels, double nbclasses, double lambda) {
+		double sum = 0;
+		for(int i = 0; i < nbclasses; i++) {
+			for(int j = 0; j < nbpixels; j++) {
+				sum += d[i][j];
+			}
+		}
+		return lambda * (sum / nbpixels * nbclasses);
 	}
 
 	int indice;
